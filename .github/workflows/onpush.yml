@@ -31,3 +31,4 @@ jobs:
           git_tag_prefix: "v"
           github_repo: ${{ github.repository }}
           git_commit_sha: ${{ github.sha }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
