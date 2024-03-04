@@ -11,7 +11,7 @@ const DEFAULTS = {
 	OLS_WORKERS_ROOT: "/",
 	OLS_BRANCH_NAME: "master",
 	OLS_INSTANCE_NAME: "", // TODO
-	OLS_API_KEY: "", // TODO
+	OLS_API_KEY: "",
 	OLS_POLLING_INTERVAL: "65",
 	OLS_UPDATE_WEBHOOK_URL: "", // TODO
 }
@@ -54,7 +54,14 @@ const GIT_STATUS = {
 	{
 		this.status = "updating"
 		this.WORKER_CACHE.clear()
-		await git_pull(REPO_DIR, ENV.OLS_BRANCH_NAME)
+		try
+		{
+			await git_pull(REPO_DIR, ENV.OLS_BRANCH_NAME)
+		}
+		catch (e)
+		{
+			console.error(`failed to pull:`, e)
+		}
 		this.status = "ready"
 	},
 	async waitForReady()
@@ -167,7 +174,15 @@ async function getRefStatus()
 async function updateIfNeeded()
 {
 	await GIT_STATUS.waitForReady()
-	await git_fetch(REPO_DIR, ENV.OLS_BRANCH_NAME)
+	try
+	{
+		await git_fetch(REPO_DIR, ENV.OLS_BRANCH_NAME)
+	}
+	catch (e)
+	{
+		console.error(`failed to fetch:`, e)
+		return
+	}
 	let refs = await getRefStatus()
 	// console.log(refs)
 	if (refs.canPull)
@@ -263,8 +278,17 @@ Deno.serve(async (req: Request) => {
 		if (url.searchParams.get("key") !== ENV.OLS_API_KEY)
 			return Response.json({ message: "invalid api key" }, { status: 403 })
 
-		// TODO: implement API
-		// what should it do?
+		const [_, _internal, _api, method, ...params] = pathname.split('/')
+		if (method == "status")
+			return Response.json({
+				status: ENV.OLS_DEV_MODE ? {
+					mode: "dev"
+				} : {
+					mode: "production",
+					commit: (await getRefStatus()).local,
+				},
+				env: pick(ENV, ["OLS_BRANCH_NAME", "OLS_WORKERS_ROOT", "OLS_INSTANCE_NAME", "OLS_POLLING_INTERVAL"])
+			})
 	}
 
 	await GIT_STATUS.waitForReady()
