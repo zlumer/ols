@@ -1,0 +1,8 @@
+{
+  "name": "ols",
+  "version": "0.0.1",
+  "main": "index.ts",
+  "repository": "git@github.com:zlumer/ols.git",
+  "author": "zlumer <zlumer@gmail.com>",
+  "license": "MIT"
+}
