@@ -25,7 +25,7 @@ jobs:
         id: package-version
       
       - name: Tag new version
-        uses: pkgdeps/action-package-version-to-git-tag@v1.5.0
+        uses: pkgdeps/git-tag-action@v2
         with:
           version: ${{ steps.package-version.outputs.current-version}}
           git_tag_prefix: "v"
