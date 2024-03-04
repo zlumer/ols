@@ -23,4 +23,4 @@ jobs:
       - uses: docker/build-push-action@v5
         with:
           push: true
-          tags: zlumer/ols:${{ steps.package-version.outputs.current-version}}
+          tags: zlumer/ols:v${{ steps.package-version.outputs.current-version}}
