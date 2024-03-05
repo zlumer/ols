@@ -115,15 +115,22 @@ With OLS you get the serverless experience without the drawbacks of vendor lock-
 
 And the best part is that if you decide to move to k8s when your team expands, you can launch OLS in your k8s cluster and it will work just fine.
 
+## Limitations
+
+Workers cannot access file system.
+
 ## TODO
 
 - [ ] Blue/green deployments
+- [ ] Separate env vars source for workers
+- [ ] Manifest file to replace CLI args
+- [ ] Shorter launch command (e.g. `yarn ols:launch` or `./ols.sh <path to manifest>`)
 - [ ] Docs: Docker Compose example
 - [ ] Docs: DB connection example
 - [ ] Docs: Dev/Staging/Production Environments example
-- [ ] Docs: add a section about how to write workers
-- [ ] Docs: add a section about how to set up a reverse proxy & SSL
-- [ ] Docs: add a section about how to set up a custom domain
+- [ ] Docs: how to write workers
+- [ ] Docs: how to set up a reverse proxy & SSL
+- [ ] Docs: how to set up a custom domain
 
 ## Credits
 
