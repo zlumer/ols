@@ -69,7 +69,7 @@ const GIT_STATUS = {
 		if (this.status == "updating")
 			await this.onFinish
 	},
-	WORKER_CACHE: new Map<string, boolean>(),
+	WORKER_CACHE: new Map<string, { importMap: string | null }>(),
 	canUseCachedWorker(worker: string)
 	{
 		if (ENV.OLS_DEV_MODE)
@@ -78,9 +78,13 @@ const GIT_STATUS = {
 		let hasCached = !!this.WORKER_CACHE.get(worker)
 		return hasCached
 	},
-	cacheWorker(worker: string)
+	getCachedWorker(worker: string)
 	{
-		this.WORKER_CACHE.set(worker, true)
+		return this.WORKER_CACHE.get(worker)
+	},
+	cacheWorker(worker: string, params: { importMap: string | null })
+	{
+		this.WORKER_CACHE.set(worker, params)
 	}
 }
 
@@ -257,6 +261,22 @@ function git_pull(mountDir: string, branch: string)
 		remoteRef: `refs/heads/${branch}`,
 	})
 }
+async function detectImportMapFile(dir: string)
+{
+	let importMapPath = path.join(dir, 'import_map.json')
+	if (await fsDir.exists(importMapPath))
+		return importMapPath
+
+	let denoPath = path.join(dir, 'deno.json')
+	if (await fsDir.exists(denoPath))
+	{
+		let denoJson = JSON.parse(await Deno.readTextFile(denoPath))
+		if (denoJson.imports)
+			return denoPath
+	}
+
+	return null
+}
 
 Deno.serve(async (req: Request) => {
 	const url = new URL(req.url)
@@ -341,13 +361,15 @@ Deno.serve(async (req: Request) => {
 		//   }
 		// }
 		// const importMapPath = `data:${encodeURIComponent(JSON.stringify(importMap))}?${encodeURIComponent('/home/deno/functions/test')}`
-		const importMapPath = null
+		const cachedWorker = GIT_STATUS.getCachedWorker(service_name)
+		const importMapPath: string | null = cachedWorker ? cachedWorker.importMap : await detectImportMapFile(servicePath)
+		
 		const envVarsObj = Deno.env.toObject()
 		const envVars = Object.keys(envVarsObj).map((k) => [k, envVarsObj[k]])
-		const forceCreate = !GIT_STATUS.canUseCachedWorker(service_name)
+		const forceCreate = !cachedWorker
 		const netAccessDisabled = false
 
-		GIT_STATUS.cacheWorker(service_name)
+		GIT_STATUS.cacheWorker(service_name, { importMap: importMapPath })
 
 		// load source from an eszip
 		//const maybeEszip = await Deno.readFile('./bin.eszip')
