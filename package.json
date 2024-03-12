@@ -1,6 +1,6 @@
 {
   "name": "ols",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "main": "index.ts",
   "repository": "git@github.com:zlumer/ols.git",
   "author": "zlumer <zlumer@gmail.com>",

@@ -1,4 +1,4 @@
-FROM supabase/edge-runtime:v1.38.0
+FROM supabase/edge-runtime:v1.40.0
 
 COPY index.ts /app/main/index.ts
 
