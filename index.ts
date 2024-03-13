@@ -70,16 +70,11 @@ const GIT_STATUS = {
 			await this.onFinish
 	},
 	WORKER_CACHE: new Map<string, { importMap: string | null }>(),
-	canUseCachedWorker(worker: string)
-	{
-		if (ENV.OLS_DEV_MODE)
-			return false
-
-		let hasCached = !!this.WORKER_CACHE.get(worker)
-		return hasCached
-	},
 	getCachedWorker(worker: string)
 	{
+		if (ENV.OLS_DEV_MODE)
+			return undefined
+
 		return this.WORKER_CACHE.get(worker)
 	},
 	cacheWorker(worker: string, params: { importMap: string | null })
