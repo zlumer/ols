@@ -1,8 +1,21 @@
 # OLS: One-Liner Serverless runtime
 
+Indie hacker's JS runtime with production live-reload.
+
 Launch always-up-to-date backends in one line of code like it's 2009 again.
 
+## When to use OLS
+
+- if you want to have a single source of truth in your git repository codebase
+- if you want to have a serverless experience without the drawbacks of vendor lock-in
+- if you don't like to wait minutes while your CI/CD pipeline is building the latest image
+
 ## Motivation
+
+Delivering your web app to the actual users is a journey. Yes, you have the code working locally. Yes, you have a git repo somewhere on GitHub with the latest version of the code. But how do others access it?
+
+This is a solved problem for frontend and static files: you just push the code and use any available CDN to serve it.
+But what about the backend?
 
 OLS is a self-hosted serverless Deno runtime with automatic live-reload from a git repository.
 The basic idea is that you run a single command on your production server and never have to maintain it anymore.
