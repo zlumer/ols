@@ -2,6 +2,7 @@ import git from "https://esm.sh/isomorphic-git@1.25.6"
 import gitHttp from 'https://unpkg.com/isomorphic-git@1.25.6/http/web/index.js'
 import * as fsDir from "https://deno.land/std@0.218.2/fs/exists.ts"
 import * as path from "https://deno.land/std@0.218.2/path/join.ts"
+import { load as loadEnv, loadSync as loadEnvSync } from "https://deno.land/std@0.220.1/dotenv/mod.ts"
 import * as fs from "node:fs"
 
 console.log('OLS: starting...')
@@ -16,15 +17,19 @@ const DEFAULTS = {
 	OLS_UPDATE_WEBHOOK_URL: "", // TODO
 }
 
-const ENV = {
+const ENV_RAW = {
 	...DEFAULTS,
 	...pick(Deno.env.toObject(), Object.keys(DEFAULTS)),
+}
+const ENV = {
+	...ENV_RAW,	
 
 	path: Deno.env.get("OLS_REPO"),
 }
 
 const REPO_DIR = "/app/repo/green"
 const DEV_DIR = "/app/workdir"
+const ENV_FILE = "/app/.env"
 
 function workerRoot()
 {
@@ -83,6 +88,41 @@ const GIT_STATUS = {
 	}
 }
 
+const WORKERS_ENV = {
+	env: {
+		...ENV_RAW,
+		...(loadEnvSync({
+			envPath: ENV_FILE,
+			allowEmptyValues: true,
+			defaultsPath: null,
+			examplePath: null,
+		}))
+	} as Record<string, string | undefined>,
+	lastUpdatedAt: Date.now(),
+	async reload()
+	{
+		let _env = await loadEnv({
+			envPath: ENV_FILE,
+			allowEmptyValues: true,
+			defaultsPath: null,
+			examplePath: null,
+		})
+		this.lastUpdatedAt = Date.now()
+		this.env = { ...ENV_RAW, ..._env }
+		return this.env
+	},
+	async swr()
+	{
+		let age = Date.now() - this.lastUpdatedAt
+		if (age > 30000)
+			return await this.reload()
+		if (age > 3000)
+			this.reload()
+
+		return this.env
+	},
+}
+
 // start watching files
 await __init()
 
@@ -116,7 +156,7 @@ async function __init()
 	{
 		if (!ENV.path)
 			throw die(`worker repository is not provided! set OLS_REPO env variable, e.g.\n  OLS_REPO=https://github.com/zlumer/ols.git`)
-		
+
 		console.log(`starting OLS in PRODUCTION mode with ${ENV.path}`)
 		await ensureGitRepo(ENV.path, REPO_DIR, ENV.OLS_BRANCH)
 		await pollForUpdates()
@@ -148,7 +188,7 @@ async function isDirEmpty(dir: string)
 	const files = Deno.readDir(dir)
 	for await (const _file of files)
 		return false
-	
+
 	return true
 }
 
@@ -358,9 +398,9 @@ Deno.serve(async (req: Request) => {
 		// const importMapPath = `data:${encodeURIComponent(JSON.stringify(importMap))}?${encodeURIComponent('/home/deno/functions/test')}`
 		const cachedWorker = GIT_STATUS.getCachedWorker(service_name)
 		const importMapPath: string | null = cachedWorker ? cachedWorker.importMap : await detectImportMapFile(servicePath)
-		
-		const envVarsObj = Deno.env.toObject()
-		const envVars = Object.keys(envVarsObj).map((k) => [k, envVarsObj[k]])
+
+		const envVarsObj = cachedWorker ? await WORKERS_ENV.swr() : await WORKERS_ENV.reload()
+		const envVars = Object.keys(envVarsObj).map((k) => [k, envVarsObj[k] || ""])
 		const forceCreate = !cachedWorker
 		const netAccessDisabled = false
 
