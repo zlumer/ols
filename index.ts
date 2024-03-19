@@ -9,7 +9,7 @@ console.log('OLS: starting...')
 const DEFAULTS = {
 	OLS_DEV_MODE: "",
 	OLS_WORKERS_ROOT: "/",
-	OLS_BRANCH_NAME: "master",
+	OLS_BRANCH: Deno.env.get("OLS_BRANCH_NAME") || "master", // backwards compatibility with OLS_BRANCH_NAME
 	OLS_INSTANCE_NAME: "", // TODO
 	OLS_API_KEY: "",
 	OLS_POLLING_INTERVAL: "65",
@@ -56,7 +56,7 @@ const GIT_STATUS = {
 		this.WORKER_CACHE.clear()
 		try
 		{
-			await git_pull(REPO_DIR, ENV.OLS_BRANCH_NAME)
+			await git_pull(REPO_DIR, ENV.OLS_BRANCH)
 		}
 		catch (e)
 		{
@@ -118,7 +118,7 @@ async function __init()
 			throw die(`worker repository is not provided! set OLS_REPO env variable, e.g.\n  OLS_REPO=https://github.com/zlumer/ols.git`)
 		
 		console.log(`starting OLS in PRODUCTION mode with ${ENV.path}`)
-		await ensureGitRepo(ENV.path, REPO_DIR, ENV.OLS_BRANCH_NAME)
+		await ensureGitRepo(ENV.path, REPO_DIR, ENV.OLS_BRANCH)
 		await pollForUpdates()
 	}
 	console.log(`OLS: READY`)
@@ -161,8 +161,8 @@ async function pollForUpdates()
 
 async function getRefStatus()
 {
-	let local = await git.resolveRef({ fs, dir: REPO_DIR, ref: ENV.OLS_BRANCH_NAME })
-	let remote = await git.resolveRef({ fs, dir: REPO_DIR, ref: `origin/${ENV.OLS_BRANCH_NAME}` })
+	let local = await git.resolveRef({ fs, dir: REPO_DIR, ref: ENV.OLS_BRANCH })
+	let remote = await git.resolveRef({ fs, dir: REPO_DIR, ref: `origin/${ENV.OLS_BRANCH}` })
 	return {
 		local,
 		remote,
@@ -175,7 +175,7 @@ async function updateIfNeeded()
 	await GIT_STATUS.waitForReady()
 	try
 	{
-		await git_fetch(REPO_DIR, ENV.OLS_BRANCH_NAME)
+		await git_fetch(REPO_DIR, ENV.OLS_BRANCH)
 	}
 	catch (e)
 	{
@@ -302,7 +302,7 @@ Deno.serve(async (req: Request) => {
 					mode: "production",
 					commit: (await getRefStatus()).local,
 				},
-				env: pick(ENV, ["OLS_BRANCH_NAME", "OLS_WORKERS_ROOT", "OLS_INSTANCE_NAME", "OLS_POLLING_INTERVAL"])
+				env: pick(ENV, ["OLS_BRANCH", "OLS_WORKERS_ROOT", "OLS_INSTANCE_NAME", "OLS_POLLING_INTERVAL"])
 			})
 	}
 
