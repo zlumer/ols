@@ -89,6 +89,29 @@ docker run -d --restart unless-stopped --rm -p 9000:9000 --env-file ./.env zlume
 
 tldr: Use different branches and environment variables to manage different environments.
 
+### Environment Variables
+
+| Name | Default Value | Description | Environment |
+| --- | --- | --- | --- |
+| OLS_DEV_MODE | false | Enable DEV mode | `dev` |
+| OLS_REPO | | Repository URL | `prod` |
+| OLS_BRANCH | `master` | Branch name in the repository where the code is located | `prod` |
+| OLS_WORKERS_ROOT | `/` | Path to workers root directory in the repo (or in the workdir in DEV mode). | `both` |
+| OLS_POLLING_INTERVAL | `65` | Repository polling interval in seconds. If you have a local git mirror, feel free to set this to lower values, e.g. `1`. If you are using a cloud repo and get rate-limited, use lower values. | `prod` |
+
+<!--
+| OLS_API_KEY | "", | |
+| OLS_INSTANCE_NAME | | |
+-->
+
+### Volume Mounts
+
+| Path | Description |
+| --- | --- |
+| `/app/.env` | Environment variables for workers. Live reloading so you don't need to restart the service after you change env. |
+| `/app/workdir` | (dev only) mount your workers here |
+| `/app/repo` | Repository will be cloned to this directory (under `./blue` and `./green` subdirs), you can cache it if you have a large repo that takes too long to clone from scratch. |
+
 ## Scalability
 
 OLS instances should generally be stateless, meaning that you can launch as much of them as you want.
